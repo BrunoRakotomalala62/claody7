@@ -33,7 +33,7 @@ app.get('/claude', async (req, res) => {
     const response = await axios.get(apiUrl, { params });
 
     res.json({
-      response: response.data
+      response: response.data.response.response
     });
 
   } catch (error) {
