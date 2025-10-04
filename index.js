@@ -75,6 +75,14 @@ app.get('/claude', async (req, res) => {
       message_count: history.length
     });
 
+  } catch (error) {
+    console.error('Erreur:', error.message);
+    res.status(500).json({
+      error: 'Erreur lors de la requête à l\'API Claude',
+      details: error.message
+    });
+  }
+});
 
 // Route pour consulter l'historique d'une conversation
 app.get('/history/:uid', (req, res) => {
@@ -101,16 +109,6 @@ app.delete('/history/:uid', (req, res) => {
     res.json({ message: 'Historique effacé avec succès' });
   } else {
     res.status(404).json({ error: 'Aucune conversation trouvée' });
-  }
-});
-
-
-  } catch (error) {
-    console.error('Erreur:', error.message);
-    res.status(500).json({
-      error: 'Erreur lors de la requête à l\'API Claude',
-      details: error.message
-    });
   }
 });
 
