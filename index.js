@@ -7,6 +7,10 @@ const PORT = 5000;
 
 app.use(express.json());
 
+// Stockage temporaire des conversations (en mémoire)
+// En production, utilisez une base de données
+const conversations = new Map();
+
 app.get('/claude', async (req, res) => {
   try {
     const { question, image, uid } = req.query;
@@ -47,9 +51,59 @@ app.get('/claude', async (req, res) => {
       }
     }
 
-    res.json({
-      response: claudeResponse
+    // Stocker l'historique de la conversation
+    if (!conversations.has(uid)) {
+      conversations.set(uid, []);
+    }
+    
+    const history = conversations.get(uid);
+    history.push({
+      question: question,
+      image: image || null,
+      response: claudeResponse,
+      timestamp: new Date().toISOString()
     });
+
+    // Garder seulement les 10 derniers messages
+    if (history.length > 10) {
+      history.shift();
+    }
+
+    res.json({
+      response: claudeResponse,
+      conversation_id: uid,
+      message_count: history.length
+    });
+
+
+// Route pour consulter l'historique d'une conversation
+app.get('/history/:uid', (req, res) => {
+  const { uid } = req.params;
+  
+  if (!conversations.has(uid)) {
+    return res.status(404).json({
+      error: 'Aucune conversation trouvée pour cet UID'
+    });
+  }
+  
+  res.json({
+    uid: uid,
+    history: conversations.get(uid)
+  });
+});
+
+// Route pour effacer l'historique
+app.delete('/history/:uid', (req, res) => {
+  const { uid } = req.params;
+  
+  if (conversations.has(uid)) {
+    conversations.delete(uid);
+    res.json({ message: 'Historique effacé avec succès' });
+  } else {
+    res.status(404).json({ error: 'Aucune conversation trouvée' });
+  }
+});
+
 
   } catch (error) {
     console.error('Erreur:', error.message);
