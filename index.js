@@ -32,8 +32,23 @@ app.get('/claude', async (req, res) => {
 
     const response = await axios.get(apiUrl, { params });
 
+    // Extraire la réponse de manière robuste
+    let claudeResponse = '';
+    
+    if (response.data) {
+      if (typeof response.data === 'string') {
+        claudeResponse = response.data;
+      } else if (response.data.response) {
+        if (typeof response.data.response === 'string') {
+          claudeResponse = response.data.response;
+        } else if (response.data.response.response) {
+          claudeResponse = response.data.response.response;
+        }
+      }
+    }
+
     res.json({
-      response: response.data.response.response
+      response: claudeResponse
     });
 
   } catch (error) {
